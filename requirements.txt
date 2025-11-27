@@ -3,10 +3,11 @@ flask-cors
 numpy
 pandas
 scikit-image
-opencv-python
+opencv-python-headless
 pillow
 scipy
 scikit-learn
 nibabel
 pydicom
 joblib
+gunicorn
