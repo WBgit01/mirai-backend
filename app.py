@@ -1,4 +1,3 @@
-# app.py (updated)
 import os
 import traceback
 import json
@@ -7,6 +6,7 @@ import joblib
 import numpy as np
 from werkzeug.utils import secure_filename
 from feature_extraction import image_file_to_feature_vector
+from flask_cors import CORS   # <<-- IMPORTANT
 
 # ----------------- CONFIG -----------------
 MODEL_CANDIDATES = [
@@ -14,16 +14,18 @@ MODEL_CANDIDATES = [
     "brain_tumor_rf_model.pkl",
     "model.pkcls",
     "brain_tumor_rf_model.pkcls",
-    "brain_tumor_rf_model.pkl"  # try the original name too
+    "brain_tumor_rf_model.pkl"
 ]
 SCALER_PATH = "scaler.pkl"
 FEATURE_ORDER_PATH = "feature_order.json"
 TMP_DIR = "tmp_upload"
 LOG_PATH = os.path.join(TMP_DIR, "predict_errors.log")
 # ------------------------------------------
-CORS(app, origins=["https://wbgit01.github.io"])
 
 app = Flask(__name__, static_folder="static", static_url_path="/")
+
+# CORS must come AFTER app is defined
+CORS(app, origins=["https://wbgit01.github.io"])
 
 def find_and_load_model():
     """Find a model file from MODEL_CANDIDATES and load it with joblib."""
