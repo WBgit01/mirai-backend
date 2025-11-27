@@ -7,6 +7,7 @@ import numpy as np
 from werkzeug.utils import secure_filename
 from feature_extraction import image_file_to_feature_vector
 from flask_cors import CORS   # <<-- IMPORTANT
+import logging
 
 # ----------------- CONFIG -----------------
 MODEL_CANDIDATES = [
@@ -22,10 +23,30 @@ TMP_DIR = "tmp_upload"
 LOG_PATH = os.path.join(TMP_DIR, "predict_errors.log")
 # ------------------------------------------
 
+# create app
 app = Flask(__name__, static_folder="static", static_url_path="/")
 
-# CORS must come AFTER app is defined
-CORS(app, origins=["https://wbgit01.github.io"])
+# ===== Render / env-driven CORS + model override + health check =====
+# Logging
+logging.basicConfig(level=logging.INFO)
+app.logger.info("Starting app...")
+
+# CORS: use GH_PAGES_ORIGIN if provided, otherwise permissive for dev
+GH_ORIGIN = os.environ.get("GH_PAGES_ORIGIN")
+if GH_ORIGIN:
+    CORS(app, origins=[GH_ORIGIN])
+else:
+    CORS(app)
+
+# Allow overriding model filename via MODEL_PATH env var (Render dashboard)
+MODEL_PATH_ENV = os.environ.get("MODEL_PATH")
+if MODEL_PATH_ENV:
+    MODEL_CANDIDATES.insert(0, MODEL_PATH_ENV)
+
+@app.route("/healthz", methods=["GET"])
+def healthz():
+    return jsonify({"ok": True}), 200
+# ================================================================
 
 def find_and_load_model():
     """Find a model file from MODEL_CANDIDATES and load it with joblib."""
@@ -213,5 +234,5 @@ def predict():
             pass
 
 if __name__ == "__main__":
-    # Run app
+    # Run app (use this locally; Render will run via gunicorn)
     app.run(debug=True, host="0.0.0.0", port=5000)
